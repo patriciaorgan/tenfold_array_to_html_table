@@ -1,5 +1,5 @@
 Sample Exersize
-/**
+
  * Instructions:
  * Write a solution in Node.JS:
  *
@@ -30,11 +30,11 @@ Sample Exersize
  * @return a string with HTML markup in it, should return null if error occurs.
  *    // Example, Given the following data set:
     //
-            // var prevArray = [ {_id:1, someKey: "RINGING", meta: { subKey1: 1234, subKey2: 52 } } ];
-            // var currArray = [ {_id:1, someKey: "HANGUP",  meta: { subKey1: 1234 } },
-            //     {_id:2, someKey: "RINGING", meta: { subKey1: 5678, subKey2: 207, subKey3: 52 } } ];
+    // var prevArray = [ {_id:1, someKey: "RINGING", meta: { subKey1: 1234, subKey2: 52 } } ];
+    // var currArray = [ {_id:1, someKey: "HANGUP",  meta: { subKey1: 1234 } },
+    //     {_id:2, someKey: "RINGING", meta: { subKey1: 5678, subKey2: 207, subKey3: 52 } } ];
     
-            // console.log( arrayDiffToHtmlTable( prevArray, currArray));
+    // console.log( arrayDiffToHtmlTable( prevArray, currArray));
     //
     //  OUTPUT (Note this is a text representation... output should be an HTML table):
     //
@@ -47,4 +47,4 @@ Sample Exersize
     //
 
 
-![](tenfold_screenshot.png)
+![](tenfold_screenshot1.png)

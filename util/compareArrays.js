@@ -29,6 +29,8 @@
  * @param currArray is an array of objects
  * @return a string with HTML markup in it, should return null if error occurs.
  */
+var _ = require('lodash');
+
 module.exports.arrayDiffToHtmlTable = function( prevArray, currArray) {
     // Example, Given the following data set:
     //
@@ -47,12 +49,11 @@ module.exports.arrayDiffToHtmlTable = function( prevArray, currArray) {
     //  ** implies this field should be bold or highlighted.
     //  !!! analyze the example carefully as it demonstrates expected cases that need to be handled. !!!
     //
-    var result = "hello world";
-    if (typeof prevArray === 'undefined' || typeof currArray === 'undefined' ){
-        throw("Parameter was undefined");
-    }
-    
     try {
+        var result = "";
+        if (typeof prevArray === 'undefined' || typeof currArray === 'undefined' ){
+            throw("Parameter was undefined");
+        }
         //create table
         result = '<table frame="box" cellspacing="10" align="center" width="90%">';
         //create th
@@ -65,28 +66,26 @@ module.exports.arrayDiffToHtmlTable = function( prevArray, currArray) {
                 //check the value of each key to see if an object and 
                 //check each concatinated key to see if exist in set, add if not already their
             //create a th for each item in the set
+            
         var resultHeaderArray = []
         // recursive call to reach each deep level and create headings for keys
-        var prevSet = new Set(prevArray);
-        prevSet.forEach(function(obj) {
+        prevArray.forEach(function(obj) {
             extractKeys(obj, "", resultHeaderArray);
         });
-        var currSet = new Set(currArray);
-        currSet.forEach(function(obj) {
+        currArray.forEach(function(obj) {
             extractKeys(obj, "", resultHeaderArray);
         });
         
-        //convert array to a Set to pull out only unique values
-        var resultHeaderSet = new Set(resultHeaderArray);
-
-        console.log(resultHeaderSet);
-        resultHeaderSet.forEach(function(value){
+        resultHeaderArray.forEach(function(value){
             result = result + "<th>" + value + "</th>";
         })
         
-        var headerArray = Array.from(resultHeaderSet);
 
-            
+        /**
+         * Assumption: if a whole row is deleted in the currArray compared to prevArray, I will not show it at all in the final table
+         * Alternative implemenations could be - show the row with *delete* in each column,
+         * Or show teh row with the _id filled in and all other appropriate columns with *delete*
+         */
         //create rows
             //create a newSet that combine unique values of prev and curr, making sure curr overwrites
             //for each _id create a row from newSet
@@ -100,9 +99,62 @@ module.exports.arrayDiffToHtmlTable = function( prevArray, currArray) {
                             //add td with no style
                         //else if currArray key is not in prevArray or key present but values different to prevArray
                             //add td with BOLD style
-            result += '<tr><td align="center">stuff</td></tr>';              
-        
-        
+                            
+            //use the currArray to determin the number of rows to add
+            currArray.forEach( function (currRow) {
+                //get the object with the correct _id from prevArray
+                var prevRow = getObjectFromArray(prevArray, currRow._id.toString());
+                if (prevRow) {
+                    result += '<tr>';
+                    resultHeaderArray.forEach( function(header) {
+                        if (header.indexOf('_') <= 0) {
+                            if(prevRow.hasOwnProperty(header)) {
+                                if (prevRow[header] === currRow[header]) {
+                                    result += '<td align="center">' + currRow[header] + '</td>';
+                                } else if (!currRow[header]){
+                                    result +='<td align="center" bgcolor="##FF0000">Deleted</td>';
+                                } else {
+                                    result += '<td align="center" bgcolor="#00FF00">' + currRow[header] + '</td>';
+                                }
+                            } else {
+                                result += '<td align="center">' + currRow[header] + '</td>';
+                            }
+                        } else {
+                            var path = header.split("_").join(".");
+                            var currValue = _.get(currRow, path);
+                            var prevValue = _.get(prevRow, path);
+                            
+                            if (prevValue) {
+                                if ( prevValue === currValue) {
+                                    result += '<td align="center">' + currValue + '</td>';
+                                } else if (!currValue){
+                                    result +='<td align="center" bgcolor="##FF0000">Deleted</td>';
+                                } 
+                            } else if (!currValue) {
+                                result +='<td align="center"</td>';
+                            } else {
+                                result += '<td align="center" bgcolor="#00FF00">' + currValue + '</td>';
+                            }
+                        }
+                    });
+                } else {
+                    resultHeaderArray.forEach( function(header) {
+                        // Assumption: no other key except _id starts with an underscore
+                        var currValue = currRow[header];
+                        if (header.indexOf('_') > 0) { 
+                            var path = header.split("_").join(".");
+                            currValue= _.get(currRow, path);
+                        }
+                        if (!currValue){
+                            result +='<td align="center"</td>';
+                        } else {
+                            result += '<td align="center" bgcolor="#00FF00">' + currValue + '</td>';
+                        }
+                    });  
+                }
+                result += '</tr>';  
+            });
+                       
     } catch (err) {
         console.log("Error occured in arrayDiffToHtmlTable %O", err);
         return null;
@@ -112,24 +164,27 @@ module.exports.arrayDiffToHtmlTable = function( prevArray, currArray) {
     
 }
 
-function extractKeys(obj,key, resultHeaderArray){
-    
+/**
+ * Extract the Keys from all levels of an object
+ * @param {Object} Assumption: that the Object will not contain Arrays inside it, just key values pair and other objects.
+ * @param {String} hold the key for a deeper object
+ * @param {Array} passing by reference the Array to add all keys
+ */
+function extractKeys(obj, key, resultHeaderArray){
+    if (!obj) {
+        return;
+    }
     var keysArray= Object.keys(obj);
     
     for (var i = 0; i < keysArray.length; i++) {
-        if (resultHeaderArray.hasOwnProperty(keysArray[i])){
+        var newKey = key ? key + '_' + keysArray[i] : keysArray[i];
+        if (resultHeaderArray.indexOf(newKey) > -1){
             continue;
-        } 
-       if (typeof obj[keysArray[i]] == 'object'){
-           extractKeys(obj[keysArray[i]], keysArray[i], resultHeaderArray);
+        } else if (typeof obj[keysArray[i]] == 'object'){
+            extractKeys(obj[keysArray[i]], newKey, resultHeaderArray);
        } else {
-           if (key === ''){
-               resultHeaderArray.push( keysArray[i]);
-           } else {
-               resultHeaderArray.push(key + '_' + keysArray[i]); 
-           }
+            resultHeaderArray.push(newKey); 
        }
-       
     }
 }
 
@@ -141,10 +196,11 @@ function extractKeys(obj,key, resultHeaderArray){
  *
  */
 function getObjectFromArray(arr, id) {
+    var result = null;
     arr.forEach(function(item){
         if (item['_id'].toString() === id) {
-            return  item;
+            result = item;
         }
-    })
-    return null;
+    });
+    return result;
 }

@@ -28,11 +28,7 @@
  * @param prevArray is an array of objects
  * @param currArray is an array of objects
  * @return a string with HTML markup in it, should return null if error occurs.
- */
-var _ = require('lodash');
-
-module.exports.arrayDiffToHtmlTable = function( prevArray, currArray) {
-    // Example, Given the following data set:
+ *    // Example, Given the following data set:
     //
             // var prevArray = [ {_id:1, someKey: "RINGING", meta: { subKey1: 1234, subKey2: 52 } } ];
             // var currArray = [ {_id:1, someKey: "HANGUP",  meta: { subKey1: 1234 } },
@@ -49,6 +45,10 @@ module.exports.arrayDiffToHtmlTable = function( prevArray, currArray) {
     //  ** implies this field should be bold or highlighted.
     //  !!! analyze the example carefully as it demonstrates expected cases that need to be handled. !!!
     //
+ */
+var _ = require('lodash');
+
+module.exports.arrayDiffToHtmlTable = function( prevArray, currArray) {
     try {
         var result = "";
         if (typeof prevArray === 'undefined' || typeof currArray === 'undefined' ){
@@ -79,39 +79,33 @@ module.exports.arrayDiffToHtmlTable = function( prevArray, currArray) {
         //create rows          
         //use the currArray to determin the number of rows to add
         currArray.forEach( function (currRow) {
+            
             //get the object with the correct _id from prevArray
             var prevRow = getObjectFromArray(prevArray, currRow._id.toString());
             if (prevRow) {
                 result += '<tr>';
+                // traverse through the column headers so each cell is added in the right location
                 resultHeaderArray.forEach( function(header) {
-                    if (header.indexOf('_') <= 0) {
-                        if(prevRow.hasOwnProperty(header)) {
-                            if (prevRow[header] === currRow[header]) {
-                                result += '<td align="center">' + currRow[header] + '</td>';
-                            } else if (!currRow[header]){
-                                result +='<td align="center" bgcolor="##FF0000">Deleted</td>';
-                            } else {
-                                result += '<td align="center" bgcolor="#00FF00">' + currRow[header] + '</td>';
-                            }
-                        } else {
-                            result += '<td align="center">' + currRow[header] + '</td>';
-                        }
-                    } else {
+                    var currValue = currRow[header];
+                    var prevValue = prevRow[header];
+                    if (header.indexOf('_') > 0) { 
                         var path = header.split("_").join(".");
                         var currValue = _.get(currRow, path);
                         var prevValue = _.get(prevRow, path);
-                        
-                        if (prevValue) {
-                            if ( prevValue === currValue) {
-                                result += '<td align="center">' + currValue + '</td>';
-                            } else if (!currValue){
-                                result +='<td align="center" bgcolor="##FF0000">Deleted</td>';
-                            } 
-                        } else if (!currValue) {
-                            result +='<td align="center"</td>';
+                    }
+                
+                    if (prevValue) {
+                        if ( prevValue === currValue) {
+                            result += addCell(currValue, false);
+                        } else if (!currValue){
+                            result += addCell('Deleted', true);
                         } else {
-                            result += '<td align="center" bgcolor="#00FF00">' + currValue + '</td>';
+                            result += addCell(currValue, true);
                         }
+                    } else if (!currValue) {
+                        result += addCell('', false);
+                    } else {
+                        result += addCell(currValue, true);
                     }
                 });
             } else {
@@ -123,9 +117,9 @@ module.exports.arrayDiffToHtmlTable = function( prevArray, currArray) {
                         currValue= _.get(currRow, path);
                     }
                     if (!currValue){
-                        result +='<td align="center"</td>';
+                        result += addCell("", false);
                     } else {
-                        result += '<td align="center" bgcolor="#00FF00">' + currValue + '</td>';
+                        result += addCell(currValue,true);
                     }
                 });  
             }
@@ -146,6 +140,8 @@ module.exports.arrayDiffToHtmlTable = function( prevArray, currArray) {
  * @param {Object} Assumption: that the Object will not contain Arrays inside it, just key values pair and other objects.
  * @param {String} hold the key for a deeper object
  * @param {Array} passing by reference the Array to add all keys
+ * @return {undefined} only if no object was passed, otherwise updating array passed by reference
+ * 
  */
 function extractKeys(obj, key, resultHeaderArray){
     if (!obj) {
@@ -181,3 +177,17 @@ function getObjectFromArray(arr, id) {
     });
     return result;
 }
+
+/**
+ * Create the HTML string for table cells, based on bold and value
+ * @param {String} cell value
+ * @param {Boolean} true of style is to be added, and false otherwise
+ * @return {String} HTML tagged td
+ * 
+ */
+function addCell(value,bold) {
+    var style = bold ? 'bgcolor="#00FF00"' : '';
+    return '<td align="center"' + style +  '>' + value + '</td>';
+    
+}
+

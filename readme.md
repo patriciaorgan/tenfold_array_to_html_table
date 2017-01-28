@@ -45,5 +45,6 @@ Sample Exersize
     //  ** implies this field should be bold or highlighted.
     //  !!! analyze the example carefully as it demonstrates expected cases that need to be handled. !!!
     //
- */
-![](./tenfold_screenshot.png =100x20)
+
+
+![](tenfold_screenshot.png)

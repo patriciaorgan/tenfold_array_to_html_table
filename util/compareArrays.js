@@ -54,18 +54,8 @@ module.exports.arrayDiffToHtmlTable = function( prevArray, currArray) {
         if (typeof prevArray === 'undefined' || typeof currArray === 'undefined' ){
             throw("Parameter was undefined");
         }
-        //create table
+        // create table
         result = '<table frame="box" cellspacing="10" align="center" width="90%">';
-        //create th
-            //get all keys from prevArray, 
-                //check if value is object, if so concat key with keys inside this object
-                //repeat until all levels are complete
-                //add each result to a set
-            //get all keys from currArray,
-                //check does each key exist in set already
-                //check the value of each key to see if an object and 
-                //check each concatinated key to see if exist in set, add if not already their
-            //create a th for each item in the set
             
         var resultHeaderArray = []
         // recursive call to reach each deep level and create headings for keys
@@ -76,92 +66,79 @@ module.exports.arrayDiffToHtmlTable = function( prevArray, currArray) {
             extractKeys(obj, "", resultHeaderArray);
         });
         
+        // create all possible combination headers in HTML string
         resultHeaderArray.forEach(function(value){
             result = result + "<th>" + value + "</th>";
         })
         
-
         /**
          * Assumption: if a whole row is deleted in the currArray compared to prevArray, I will not show it at all in the final table
          * Alternative implemenations could be - show the row with *delete* in each column,
          * Or show teh row with the _id filled in and all other appropriate columns with *delete*
          */
-        //create rows
-            //create a newSet that combine unique values of prev and curr, making sure curr overwrites
-            //for each _id create a row from newSet
-                //for each header in thArray 
-                    //for each key 
-                       // if the key has no '_' - it is single carry on as normal
-                            //keytoBeChekced = key
-                        //else  split key by '_" into an array
-                            //loop that array
-                        //if currArray === prevArray value
-                            //add td with no style
-                        //else if currArray key is not in prevArray or key present but values different to prevArray
-                            //add td with BOLD style
-                            
-            //use the currArray to determin the number of rows to add
-            currArray.forEach( function (currRow) {
-                //get the object with the correct _id from prevArray
-                var prevRow = getObjectFromArray(prevArray, currRow._id.toString());
-                if (prevRow) {
-                    result += '<tr>';
-                    resultHeaderArray.forEach( function(header) {
-                        if (header.indexOf('_') <= 0) {
-                            if(prevRow.hasOwnProperty(header)) {
-                                if (prevRow[header] === currRow[header]) {
-                                    result += '<td align="center">' + currRow[header] + '</td>';
-                                } else if (!currRow[header]){
-                                    result +='<td align="center" bgcolor="##FF0000">Deleted</td>';
-                                } else {
-                                    result += '<td align="center" bgcolor="#00FF00">' + currRow[header] + '</td>';
-                                }
-                            } else {
+        //create rows          
+        //use the currArray to determin the number of rows to add
+        currArray.forEach( function (currRow) {
+            //get the object with the correct _id from prevArray
+            var prevRow = getObjectFromArray(prevArray, currRow._id.toString());
+            if (prevRow) {
+                result += '<tr>';
+                resultHeaderArray.forEach( function(header) {
+                    if (header.indexOf('_') <= 0) {
+                        if(prevRow.hasOwnProperty(header)) {
+                            if (prevRow[header] === currRow[header]) {
                                 result += '<td align="center">' + currRow[header] + '</td>';
+                            } else if (!currRow[header]){
+                                result +='<td align="center" bgcolor="##FF0000">Deleted</td>';
+                            } else {
+                                result += '<td align="center" bgcolor="#00FF00">' + currRow[header] + '</td>';
                             }
                         } else {
-                            var path = header.split("_").join(".");
-                            var currValue = _.get(currRow, path);
-                            var prevValue = _.get(prevRow, path);
-                            
-                            if (prevValue) {
-                                if ( prevValue === currValue) {
-                                    result += '<td align="center">' + currValue + '</td>';
-                                } else if (!currValue){
-                                    result +='<td align="center" bgcolor="##FF0000">Deleted</td>';
-                                } 
-                            } else if (!currValue) {
-                                result +='<td align="center"</td>';
-                            } else {
-                                result += '<td align="center" bgcolor="#00FF00">' + currValue + '</td>';
-                            }
+                            result += '<td align="center">' + currRow[header] + '</td>';
                         }
-                    });
-                } else {
-                    resultHeaderArray.forEach( function(header) {
-                        // Assumption: no other key except _id starts with an underscore
-                        var currValue = currRow[header];
-                        if (header.indexOf('_') > 0) { 
-                            var path = header.split("_").join(".");
-                            currValue= _.get(currRow, path);
-                        }
-                        if (!currValue){
+                    } else {
+                        var path = header.split("_").join(".");
+                        var currValue = _.get(currRow, path);
+                        var prevValue = _.get(prevRow, path);
+                        
+                        if (prevValue) {
+                            if ( prevValue === currValue) {
+                                result += '<td align="center">' + currValue + '</td>';
+                            } else if (!currValue){
+                                result +='<td align="center" bgcolor="##FF0000">Deleted</td>';
+                            } 
+                        } else if (!currValue) {
                             result +='<td align="center"</td>';
                         } else {
                             result += '<td align="center" bgcolor="#00FF00">' + currValue + '</td>';
                         }
-                    });  
-                }
-                result += '</tr>';  
-            });
+                    }
+                });
+            } else {
+                resultHeaderArray.forEach( function(header) {
+                    // Assumption: no other key except _id starts with an underscore
+                    var currValue = currRow[header];
+                    if (header.indexOf('_') > 0) { 
+                        var path = header.split("_").join(".");
+                        currValue= _.get(currRow, path);
+                    }
+                    if (!currValue){
+                        result +='<td align="center"</td>';
+                    } else {
+                        result += '<td align="center" bgcolor="#00FF00">' + currValue + '</td>';
+                    }
+                });  
+            }
+            result += '</tr>';  
+        });
                        
     } catch (err) {
         console.log("Error occured in arrayDiffToHtmlTable %O", err);
         return null;
     }
+    // close off the Table tag 
     result += "</table>";
     return result;
-    
 }
 
 /**

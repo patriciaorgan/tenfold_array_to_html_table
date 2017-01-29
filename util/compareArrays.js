@@ -161,7 +161,7 @@ function createRows(prevArray, currArray, headings){
 }
 
 /**
- * Create the HTML string for table cells, based on bold/highlighted and value
+ * Create the HTML string for table cells, based on bold/(went with highlighted as it look at bit more obvious the changes) and value
  * @param {String} cell value
  * @param {Boolean} true of style is to be added, and false otherwise
  * @return {String} HTML tagged td
@@ -172,4 +172,3 @@ function addCell(value, bold) {
     return '<td align="center"' + style +  '>' + value + '</td>';
     
 }
-
